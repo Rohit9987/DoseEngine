@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/headmodel_demo.dir/src/main.cc.o CMakeFiles/headmodel_demo.dir/src/HeadModel.cpp.o -o headmodel_demo 

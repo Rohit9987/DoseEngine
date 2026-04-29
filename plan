@@ -1,0 +1,41 @@
+Stage 1: fluence in water phantom
+	-> headmodel -> fluence grid at surface/isocenter plane
+
+Stage 2: TERMA
+	-> fluence x attenuation x uen/p or u/p
+
+Stage 3: kernel loading
+	-> read .bin kernels -> Kernel3D
+
+Stage 4: dose convolution
+	-> TERMA x Kernel -> dose grid
+
+Stage 5: validation
+	-> profiles, pdd, output factors, kernel sanity plots
+
+dose_engine/
+  include/dose_engine/
+    Grid3D.h
+    Volume.h
+    BeamGeometry.h
+    Phantom.h
+    TermaCalculator.h
+    Kernel3D.h
+    KernelLibrary.h
+    DoseConvolver.h
+    DoseEngine.h
+
+  src/
+    TermaCalculator.cpp
+    Kernel3D.cpp
+    KernelLibrary.cpp
+    DoseConvolver.cpp
+    DoseEngine.cpp
+
+  apps/
+    water_box_demo.cc
+
+  data/
+    kernels/
+
+  results/
