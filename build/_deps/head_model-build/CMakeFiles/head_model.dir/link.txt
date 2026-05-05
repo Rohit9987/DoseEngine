@@ -1,2 +1,0 @@
-/usr/bin/ar qc libhead_model.a CMakeFiles/head_model.dir/src/HeadModel.cpp.o
-/usr/bin/ranlib libhead_model.a

@@ -15,7 +15,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(head_model)
 
 add_executable(dose_engine
-    src/main.cc
+	src/main.cc src/TermaCalculator.cpp
 )
 
 target_include_directories(dose_engine PRIVATE
