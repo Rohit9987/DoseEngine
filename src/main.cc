@@ -7,20 +7,42 @@
 #include "dose_engine/phantom/WaterPhantom.h"
 #include "dose_engine/geometry/BeamGeometry.h"
 #include "dose_engine/dose/TermaCalculator.h"
-#include "dose_engine/physics/PhotonAttenuationTable.h"
 
+
+#include "dose_engine/physics/BeamSpectrum.h"
+#include "dose_engine/physics/PhotonAttenuationTable.h"
+#include "dose_engine/physics/EffectiveAttenuation.h"
 
 void test_photonAttenuation()
 {
-	auto water = doseengine::physics::PhotonAttenuationTable::water();
+auto spectrum = doseengine::physics::BeamSpectrum::sixMV();
+auto waterAtt = doseengine::physics::PhotonAttenuationTable::water();
 
-	double E = 2.0; // MeV
+double sumWeights = 0.0;
+double meanEnergy = 0.0;
 
-	double mu_mm   = water.muPerMm(E);
-	double muen_mm = water.muenPerMm(E);
+for (const auto& p : spectrum.points())
+{
+    sumWeights += p.relativeWeight;
+    meanEnergy += p.relativeWeight * p.energy_MeV;
+}
 
-	std::cout << "mu = " << mu_mm << " mm^-1\n";
-	std::cout << "muen = " << muen_mm << " mm^-1\n";
+double mu_eff =
+    doseengine::physics::EffectiveAttenuation::weightedMuPerMm(
+        spectrum, waterAtt
+    );
+
+double muen_eff =
+    doseengine::physics::EffectiveAttenuation::weightedMuenPerMm(
+        spectrum, waterAtt
+    );
+
+std::cout << "Spectrum sanity check\n";
+std::cout << "  Sum weights = " << sumWeights << "\n";
+std::cout << "  Mean energy = " << meanEnergy << " MeV\n";
+std::cout << "  Effective mu = " << mu_eff << " mm^-1\n";
+std::cout << "  Effective mu_en = " << muen_eff << " mm^-1\n";
+
 }
 
 int main()
