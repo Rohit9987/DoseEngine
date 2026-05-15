@@ -4,6 +4,10 @@
 #include <stdexcept>
 #include <iostream>
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 namespace doseengine::dose
 {
 
@@ -29,43 +33,48 @@ core::Grid3D<float> StencilConvolver::convolveGather(
 
     const auto& taps = stencil.taps();
 
-    for (std::size_t tz = 0; tz < dose.nz(); ++tz)
-    {
-		std::cout << tz << "/" << dose.nz() << '\n';
-        for (std::size_t ty = 0; ty < dose.ny(); ++ty)
-        {
-            for (std::size_t tx = 0; tx < dose.nx(); ++tx)
-            {
-                double sum = 0.0;
 
-                for (const auto& tap : taps)
-                {
-                    const long sx = static_cast<long>(tx) - tap.dx;
-                    const long sy = static_cast<long>(ty) - tap.dy;
-                    const long sz = static_cast<long>(tz) - tap.dz;
+	// Convolution
+	#pragma omp parallel for collapse(3) schedule(dynamic)
+	for (long tz = 0; tz < static_cast<long>(dose.nz()); ++tz)
+	{
+		for (long ty = 0; ty < static_cast<long>(dose.ny()); ++ty)
+		{
+			for (long tx = 0; tx < static_cast<long>(dose.nx()); ++tx)
+			{
+				double sum = 0.0;
 
-                    if (sx < 0 || sy < 0 || sz < 0 ||
-                        sx >= static_cast<long>(terma.nx()) ||
-                        sy >= static_cast<long>(terma.ny()) ||
-                        sz >= static_cast<long>(terma.nz()))
-                    {
-                        continue;
-                    }
+				for (const auto& tap : taps)
+				{
+					const long sx = tx - tap.dx;
+					const long sy = ty - tap.dy;
+					const long sz = tz - tap.dz;
 
-                    sum += static_cast<double>(
-                        terma(
-                            static_cast<std::size_t>(sx),
-                            static_cast<std::size_t>(sy),
-                            static_cast<std::size_t>(sz)
-                        )
-                    ) * static_cast<double>(tap.weight);
-                }
+					if (sx < 0 || sy < 0 || sz < 0 ||
+						sx >= static_cast<long>(terma.nx()) ||
+						sy >= static_cast<long>(terma.ny()) ||
+						sz >= static_cast<long>(terma.nz()))
+					{
+						continue;
+					}
 
-                dose(tx, ty, tz) = static_cast<float>(sum);
-            }
-        }
-    }
+					sum += static_cast<double>(
+						terma(
+							static_cast<std::size_t>(sx),
+							static_cast<std::size_t>(sy),
+							static_cast<std::size_t>(sz)
+						)
+					) * static_cast<double>(tap.weight);
+				}
 
+				dose(
+					static_cast<std::size_t>(tx),
+					static_cast<std::size_t>(ty),
+					static_cast<std::size_t>(tz)
+				) = static_cast<float>(sum);
+			}
+		}
+	}
     return dose;
 }
 

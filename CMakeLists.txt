@@ -12,6 +12,8 @@ FetchContent_Declare(
     GIT_TAG master
 )
 
+find_package(OpenMP REQUIRED)
+
 FetchContent_MakeAvailable(head_model)
 
 add_executable(dose_engine
@@ -27,5 +29,5 @@ target_include_directories(dose_engine PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 target_link_libraries(dose_engine
-    PRIVATE head_model
+	PRIVATE head_model OpenMP::OpenMP_CXX
 )
