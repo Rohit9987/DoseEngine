@@ -9,16 +9,16 @@
 
 namespace doseengine::dose
 {
-
+	
 	core::Grid3D<float> TermaCalculator::computeWaterTerma(
-			const core::Volume& volume,
-			const headmodel::grid::Grid2D<float>& fluence,
-			const geometry::BeamGeometry& beam,
-			const Params& params)
+				const core::Volume& volume,
+				const headmodel::grid::Grid2D<float>& fluence,
+				const geometry::BeamGeometry& beam,
+				const physics::BeamSpectrum& spectrum,
+				const physics::PhotonAttenuationTable& attenuation,
+				double density_g_per_cm3,
+				bool useInverseSquare)
 	{
-		if(params.mu_per_mm < 0.0 || params.mu_en_per_mm < 0.0)
-			throw std::runtime_error("TermaCalculator: attenuation coefficients must be non-negative");
-
 		const auto& density = volume.density();
 
 		core::Grid3D<float> terma(
@@ -31,14 +31,28 @@ namespace doseengine::dose
 
 		const double sourceToIso_mm = beam.sad_mm;
 
-
 		for(std::size_t k = 0; k < density.nz(); ++k)
 		{
 			const double z_mm = density.z(k);
-			const double attenuation = std::exp(-params.mu_per_mm * z_mm);
+
+			double spectralFactor = 0.0;
+			for (const auto& sp : spectrum.points())
+			{
+				const double mu_mm = 
+					attenuation.muPerMm(sp.energy_MeV, density_g_per_cm3);
+
+				const double muen_mm = 
+					attenuation.muenPerMm(sp.energy_MeV, density_g_per_cm3);
+
+				spectralFactor += 
+					sp.relativeWeight *
+					sp.energy_MeV *
+					std::exp(-mu_mm * z_mm)
+					* muen_mm;
+			}
 
 			double invSq = 1.0;
-			if(params.useInverseSquare)
+			if(useInverseSquare)
 			{
 				const double sourceToPoint_mm = sourceToIso_mm + z_mm;
 				invSq = (sourceToIso_mm * sourceToIso_mm)/
@@ -52,16 +66,14 @@ namespace doseengine::dose
 				for(std::size_t i = 0; i < density.nx(); ++i)
 				{
 					const double x_mm = density.x(i);
-
 					const float phi = sampleFluenceNearest(fluence, x_mm, y_mm);
 
 					const double rho  = density(i, j, k);
 
 					const double value = 
 						static_cast<double>(phi)
-						* attenuation
+						* spectralFactor
 						* invSq
-						* params.mu_en_per_mm
 						* rho;
 
 					terma(i, j, k) = static_cast<float>(value);

@@ -15,7 +15,12 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(head_model)
 
 add_executable(dose_engine
-	src/main.cc src/TermaCalculator.cpp
+	src/main.cc 
+	src/TermaCalculator.cpp 
+	src/KernelLoader.cpp 
+	src/DoseConvolver.cpp
+	src/KernelStencil.cpp
+	src/StencilConvolver.cpp
 )
 
 target_include_directories(dose_engine PRIVATE
