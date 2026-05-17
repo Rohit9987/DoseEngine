@@ -23,6 +23,7 @@ add_executable(dose_engine
 	src/DoseConvolver.cpp
 	src/KernelStencil.cpp
 	src/StencilConvolver.cpp
+	src/SpectrumKernelBuilder.cpp
 )
 
 target_include_directories(dose_engine PRIVATE

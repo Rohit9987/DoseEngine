@@ -20,108 +20,7 @@
 
 #include "dose_engine/kernel/KernelStencil.h"
 #include "dose_engine/dose/StencilConvolver.h"
-
-
-
-/*
-	auto print_terma = [terma](const int k)-> double
-	{
-		double t = terma(75, 75, k);
-		std::cout << "CAX depth "<< terma.z(k) << " mm TERMA = "
-              << t << "\n";
-		return t;
-	};
-	double t = print_terma(100);
-	t /= print_terma(50);
-	std::cout << "TPR20/10 is approximately: " << t << '\n';
-	
-
-
-	// csv export
-	std::ofstream out("terma_cax.csv");
-	out << "k,z_mm,terma\n";
-
-	const std::size_t cx = terma.nx() / 2;
-	const std::size_t cy = terma.ny() / 2;
-	for (std::size_t k = 0; k < terma.nz(); ++k)
-	{
-		out << k << "," << terma.z(k) << ","
-			<< terma(cx, cy, k) << "\n";
-	}
-	out.close();
-
-	
-	std::ofstream out2("terma_crossline.csv");
-	out << "k,x_mm,terma\n";
-
-	const std::size_t cz = 50;
-	for (std::size_t k = 0; k < terma.nx(); ++k)
-	{
-		out2 << k << "," << terma.x(k) << ","
-			<< terma(k, cy, cz) << "\n";
-	}
-	out2.close();
-	
-
-	auto kernel1 = []()
-	{
-		auto kernel = doseengine::kernel::KernelLoader::loadKernelBin(
-				"../../Kernel/kernel-downsampled/1.0MeV_kernel.bin",
-			true
-		);
-
-		std::cout << "Kernel loaded\n";
-		std::cout << "Energy: " << kernel.energyMeV() << " MeV\n";
-		std::cout << "Shape: "
-				  << kernel.nx() << " x "
-				  << kernel.ny() << " x "
-				  << kernel.nz() << "\n";
-
-		std::cout << "Spacing: "
-				  << kernel.dx_mm() << ", "
-				  << kernel.dy_mm() << ", "
-				  << kernel.dz_mm() << " mm\n";
-
-		std::cout << "Offset: "
-				  << kernel.x0_mm() << ", "
-				  << kernel.y0_mm() << ", "
-				  << kernel.z0_mm() << " mm\n";
-
-		std::cout << "Kernel sum: " << kernel.sum() << "\n";
-
-		// save csv
-		std::ofstream out("kernel_cax.csv");
-		out << "k,z,kernel\n";
-
-		const std::size_t cx = kernel.nx() / 2;
-		const std::size_t cy = kernel.ny() / 2;
-		for (std::size_t k = 0; k < kernel.nz(); ++k)
-		{
-			out << k << "," <<  k*kernel.dz_mm() + kernel.z0_mm() << ","
-				<< kernel.values()(cx, cy, k) << "\n";
-		}
-		out.close();
-
-		
-		std::ofstream out2("kernel_crossline.csv");
-		out2 << "k,x_mm,kernel\n";
-
-		const std::size_t cz = 40;
-		for (std::size_t k = 0; k < kernel.nx(); ++k)
-		{
-			out2 << k << "," << k * kernel.dx_mm() + kernel.x0_mm() << ","
-				<< kernel.values()(k, cy, cz) << "\n";
-		}
-		out2.close();
-			
-	};
-
-	kernel1();
-
-
-*/
-
-
+#include "dose_engine/kernel/SpectrumKernelBuilder.h"
 
 
 int main()
@@ -171,7 +70,7 @@ int main()
 		spectrum,
 		waterAtt,
 		1.0,
-		false
+		true
 	);
 
 	end = std::chrono::high_resolution_clock::now();
@@ -189,13 +88,35 @@ int main()
 
 	start = std::chrono::high_resolution_clock::now();
 
-	auto kernel = doseengine::kernel::KernelLoader::loadKernelBin(
-			"../../Kernel/kernel-downsampled/1.0MeV_kernel.bin",
-			true
+	std::vector<doseengine::kernel::SpectrumKernelFile> kernelFiles = {
+		{0.10, "../../Kernel/kernel-downsampled/0.1MeV_kernel.bin"},
+		{0.20, "../../Kernel/kernel-downsampled/0.2MeV_kernel.bin"},
+		{0.30, "../../Kernel/kernel-downsampled/0.3MeV_kernel.bin"},
+		{0.40, "../../Kernel/kernel-downsampled/0.4MeV_kernel.bin"},
+		{0.50, "../../Kernel/kernel-downsampled/0.5MeV_kernel.bin"},
+		{0.60, "../../Kernel/kernel-downsampled/0.6MeV_kernel.bin"},
+		{0.80, "../../Kernel/kernel-downsampled/0.8MeV_kernel.bin"},
+		{1.00, "../../Kernel/kernel-downsampled/1.0MeV_kernel.bin"},
+		{1.25, "../../Kernel/kernel-downsampled/1.25MeV_kernel.bin"},
+		{1.50, "../../Kernel/kernel-downsampled/1.50MeV_kernel.bin"},
+		{2.00, "../../Kernel/kernel-downsampled/2.0MeV_kernel.bin"},
+		{3.00, "../../Kernel/kernel-downsampled/3.0MeV_kernel.bin"},
+		{4.00, "../../Kernel/kernel-downsampled/4.0MeV_kernel.bin"},
+		{5.00, "../../Kernel/kernel-downsampled/5.0MeV_kernel.bin"},
+		{6.00, "../../Kernel/kernel-downsampled/6.0MeV_kernel.bin"}
+	};
+
+	auto weightedKernel =
+		doseengine::kernel::SpectrumKernelBuilder::buildWeightedKernel(
+			kernelFiles,
+			spectrum,
+			waterAtt,
+			100.0,  // reference depth = 10 cm
+			true    // normalize each monoenergetic kernel first
 		);
 
 	auto coarseKernel = doseengine::kernel::KernelStencil::binToCoarseKernel(
-		kernel,
+		weightedKernel,
 		2.0,        // match TERMA voxel spacing
 		51, 51, 51,
 		-50.0, -50.0, -20.0
@@ -224,8 +145,40 @@ int main()
 			  << duration_ms.count()
 			  << " s\n";
 
-	std::cout << "Dose at 10 cm : " << dose(dose.nx()/2, dose.ny()/2, 50) << "\n"
-			  << "Dose at 10 cm : " << dose(dose.nx()/2, dose.ny()/2, 100) << "\n";
+	auto d10 = dose(dose.nx()/2, dose.ny()/2, 50);
+	auto d20 = dose(dose.nx()/2, dose.ny()/2, 100);
+
+	std::cout << "Dose at 10 cm : " << d10 << "\n"
+			  << "Dose at 10 cm : " << d20 << "\n"
+			  << "TPR20/10 : " << d20/d10 << '\n';
+
+
+
+	
+	std::ofstream out("dose_cax.csv");
+	out << "k,z_mm,dose\n";
+
+	const std::size_t cx = dose.nx() / 2;
+	const std::size_t cy = dose.ny() / 2;
+	for (std::size_t k = 0; k < dose.nz(); ++k)
+	{
+		out << k << "," << dose.z(k) << ","
+			<< dose(cx, cy, k) << "\n";
+	}
+	out.close();
+
+	
+	std::ofstream out2("dose.csv");
+	out << "k,x_mm,terma\n";
+
+	const std::size_t cz = 50;
+	for (std::size_t k = 0; k < dose.nx(); ++k)
+	{
+		out2 << k << "," << dose.x(k) << ","
+			<< dose(k, cy, cz) << "\n";
+	}
+	out2.close();
+	
 
     return 0;
 }
