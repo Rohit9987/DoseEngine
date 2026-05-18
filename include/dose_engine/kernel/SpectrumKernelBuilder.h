@@ -11,12 +11,6 @@
 
 namespace doseengine::kernel {
 
-	struct SpectrumKernelFile
-	{
-		double energy_MeV = 0.0;
-		std::string path;
-	};
-
 	class SpectrumKernelBuilder
 	{
 	public:

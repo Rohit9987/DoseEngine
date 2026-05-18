@@ -47,7 +47,7 @@ namespace doseengine::dose
 				spectralFactor += 
 					sp.relativeWeight *
 					sp.energy_MeV *
-					std::exp(-mu_mm * z_mm)
+					std::exp(-muen_mm * z_mm)
 					* muen_mm;
 			}
 

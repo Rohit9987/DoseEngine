@@ -22,6 +22,7 @@
 #include "dose_engine/dose/StencilConvolver.h"
 #include "dose_engine/kernel/SpectrumKernelBuilder.h"
 
+#include "dose_engine/io/Grid3DExport.h"
 
 int main()
 {
@@ -85,26 +86,19 @@ int main()
 			  << terma.ny() << ','
 			  << terma.nz() << ")\n";
 
+	auto t10 = terma(terma.nx()/2, terma.ny()/2, 50);
+	auto t20 = terma(terma.nx()/2, terma.ny()/2, 100);
+
+	std::cout << "terma at 10 cm : " << t10 << "\n"
+			  << "terma at 20 cm : " << t20 << "\n"
+			  << "terma_TPR20/10 : " << t20/t10 << '\n';
 
 	start = std::chrono::high_resolution_clock::now();
 
-	std::vector<doseengine::kernel::SpectrumKernelFile> kernelFiles = {
-		{0.10, "../../Kernel/kernel-downsampled/0.1MeV_kernel.bin"},
-		{0.20, "../../Kernel/kernel-downsampled/0.2MeV_kernel.bin"},
-		{0.30, "../../Kernel/kernel-downsampled/0.3MeV_kernel.bin"},
-		{0.40, "../../Kernel/kernel-downsampled/0.4MeV_kernel.bin"},
-		{0.50, "../../Kernel/kernel-downsampled/0.5MeV_kernel.bin"},
-		{0.60, "../../Kernel/kernel-downsampled/0.6MeV_kernel.bin"},
-		{0.80, "../../Kernel/kernel-downsampled/0.8MeV_kernel.bin"},
-		{1.00, "../../Kernel/kernel-downsampled/1.0MeV_kernel.bin"},
-		{1.25, "../../Kernel/kernel-downsampled/1.25MeV_kernel.bin"},
-		{1.50, "../../Kernel/kernel-downsampled/1.50MeV_kernel.bin"},
-		{2.00, "../../Kernel/kernel-downsampled/2.0MeV_kernel.bin"},
-		{3.00, "../../Kernel/kernel-downsampled/3.0MeV_kernel.bin"},
-		{4.00, "../../Kernel/kernel-downsampled/4.0MeV_kernel.bin"},
-		{5.00, "../../Kernel/kernel-downsampled/5.0MeV_kernel.bin"},
-		{6.00, "../../Kernel/kernel-downsampled/6.0MeV_kernel.bin"}
-	};
+	const std::string kernelDir = "../../Kernel/kernel-downsampled/";
+
+	auto kernelFiles =
+		doseengine::physics::BeamSpectrum::sixMVKernelFiles(kernelDir);
 
 	auto weightedKernel =
 		doseengine::kernel::SpectrumKernelBuilder::buildWeightedKernel(
@@ -149,35 +143,36 @@ int main()
 	auto d20 = dose(dose.nx()/2, dose.ny()/2, 100);
 
 	std::cout << "Dose at 10 cm : " << d10 << "\n"
-			  << "Dose at 10 cm : " << d20 << "\n"
+			  << "Dose at 20 cm : " << d20 << "\n"
 			  << "TPR20/10 : " << d20/d10 << '\n';
 
 
+	doseengine::io::exportCaxProfileCsv(
+		"terma_cax.csv",
+		terma,
+		"terma"
+	);
 
+	doseengine::io::exportCrosslineProfileAtDepthCsv(
+		"terma_crossline_100mm.csv",
+		terma,
+		"terma",
+		100.0
+	);
+
+	doseengine::io::exportCaxProfileCsv(
+		"dose_cax.csv",
+		dose,
+		"dose"
+	);
+
+	doseengine::io::exportCrosslineProfileAtDepthCsv(
+		"dose_crossline_100mm.csv",
+		dose,
+		"dose",
+		100.0
+	);
 	
-	std::ofstream out("dose_cax.csv");
-	out << "k,z_mm,dose\n";
-
-	const std::size_t cx = dose.nx() / 2;
-	const std::size_t cy = dose.ny() / 2;
-	for (std::size_t k = 0; k < dose.nz(); ++k)
-	{
-		out << k << "," << dose.z(k) << ","
-			<< dose(cx, cy, k) << "\n";
-	}
-	out.close();
-
-	
-	std::ofstream out2("dose.csv");
-	out << "k,x_mm,terma\n";
-
-	const std::size_t cz = 50;
-	for (std::size_t k = 0; k < dose.nx(); ++k)
-	{
-		out2 << k << "," << dose.x(k) << ","
-			<< dose(k, cy, cz) << "\n";
-	}
-	out2.close();
 	
 
     return 0;
