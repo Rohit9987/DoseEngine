@@ -65,13 +65,13 @@ int main()
 	start = std::chrono::high_resolution_clock::now();
 
 	auto terma = doseengine::dose::TermaCalculator::computeWaterTerma(
+		head,
 		phantom.volume(),
-		fluence.total,
+		fluence,
 		beam,
 		spectrum,
 		waterAtt,
-		1.0,
-		true
+		1.0
 	);
 
 	end = std::chrono::high_resolution_clock::now();
@@ -118,7 +118,7 @@ int main()
 
 	auto stencil = doseengine::kernel::KernelStencil::fromKernel(
 		coarseKernel,
-		0.95,   // keep 99.5% of kernel magnitude
+		0.995,   // keep 99.5% of kernel magnitude
 		true     // renormalize kept taps to unit sum
 	);
 
@@ -141,10 +141,12 @@ int main()
 
 	auto d10 = dose(dose.nx()/2, dose.ny()/2, 50);
 	auto d20 = dose(dose.nx()/2, dose.ny()/2, 100);
+	auto tpr = 1.2661 * d20/d10 - 0.0595;
+
 
 	std::cout << "Dose at 10 cm : " << d10 << "\n"
 			  << "Dose at 20 cm : " << d20 << "\n"
-			  << "TPR20/10 : " << d20/d10 << '\n';
+			  << "TPR20/10 : " << tpr << '\n';
 
 
 	doseengine::io::exportCaxProfileCsv(
@@ -173,6 +175,19 @@ int main()
 		100.0
 	);
 	
+	doseengine::io::exportCrosslineProfileAtDepthCsv(
+		"dose_crossline_50mm.csv",
+		dose,
+		"dose",
+		50.0
+	);
+
+	doseengine::io::exportCrosslineProfileAtDepthCsv(
+		"dose_crossline_200mm.csv",
+		dose,
+		"dose",
+		200.0
+	);
 	
 
     return 0;

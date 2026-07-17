@@ -8,6 +8,7 @@
 #include "dose_engine/physics/PhotonAttenuationTable.h"
 
 #include "headmodel/grid/Grid2D.h"
+#include "headmodel/HeadModel.h"
 
 namespace doseengine::dose
 {
@@ -23,13 +24,14 @@ namespace doseengine::dose
 		};
 
 		static core::Grid3D<float> computeWaterTerma(
+				const headmodel::HeadModel& headmodel,
 				const core::Volume& volume,
-				const headmodel::grid::Grid2D<float>& fluence,
+				const headmodel::FluenceResult& fluence,
 				const geometry::BeamGeometry& beam,
 				const physics::BeamSpectrum& spectrum,
 				const physics::PhotonAttenuationTable& attenuation,
-				double density_g_per_cm3 = 1.0,
-				bool useInverseSquare = false);
+				double density_g_per_cm3 = 1.0
+				);
 
 	private:
 		static float sampleFluenceNearest(
