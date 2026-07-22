@@ -1,6 +1,5 @@
 #pragma once
 
-#include <bits/types/cookie_io_functions_t.h>
 #include <vector>
 #include <stdexcept>
 #include <cstddef>
@@ -49,14 +48,14 @@ namespace doseengine::core
 		
 		std::size_t index(std::size_t i, std::size_t j, std::size_t k) const
 		{
-			return k * nx_ * ny +
+			return k * nx_ * ny_ +
 				   j * nx_ +
 				   i;
 		}
 
-		double x(std::size_t i) const { return x0_mm + static_cast<double>(i) * dx_mm_; }
-		double y(std::size_t j) const { return y0_mm + static_cast<double>(j) * dy_mm_; }
-		double z(std::size_t k) const { return z0_mm + static_cast<double>(k) * dz_mm_; }
+		double x(std::size_t i) const { return x0_mm_ + static_cast<double>(i) * dx_mm_; }
+		double y(std::size_t j) const { return y0_mm_ + static_cast<double>(j) * dy_mm_; }
+		double z(std::size_t k) const { return z0_mm_ + static_cast<double>(k) * dz_mm_; }
 
 		void fill(const T& value)
 		{

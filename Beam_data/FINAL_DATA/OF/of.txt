@@ -1,0 +1,17 @@
+DETECTOR: uD/Semiflex3D
+FS 1 corrected for small field (Sclin = 1.175384 kOmega = 0.98776)
+Depth: 10cm
+SSD: 100 cm	
+FS	OF
+1	0.697
+2	0.796
+3	0.832
+4	0.864
+5	0.893
+6	0.921
+8	0.966
+10	1.000
+15	1.060
+20	1.102
+30	1.159
+40	1.184
